@@ -1,0 +1,33 @@
+:root {
+  --bg: #0f0f13;
+  --surface: #18181f;
+  --surface2: #22222c;
+  --border: #2e2e3a;
+  --text: #f0f0f5;
+  --text-dim: #8888a0;
+  --accent: #e8c547;
+  --accent2: #4a9eff;
+
+  --status-order: #ff6b35;
+  --status-arranged: #9b59b6;
+  --status-arrived: #3498db;
+  --status-appt: #27ae60;
+  --status-done: #95a5a6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+button { cursor: pointer; font-family: inherit; }
+input, select, textarea { font-family: inherit; }
