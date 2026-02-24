@@ -660,3 +660,80 @@
     grid-template-columns: repeat(3, 1fr) !important;
   }
 }
+
+/* ============================================================
+   ALERT GRID
+   ============================================================ */
+.alert-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.alert-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.alert-card:hover {
+  border-color: var(--alert-color);
+  background: color-mix(in srgb, var(--alert-color) 8%, var(--surface));
+}
+
+.alert-card[style*="outline"] {
+  background: color-mix(in srgb, var(--alert-color) 12%, var(--surface));
+}
+
+.alert-label {
+  flex: 1;
+  text-align: left;
+  font-size: 11px;
+}
+
+/* ============================================================
+   ALERT BANNER ON CARD
+   ============================================================ */
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 10px 10px 0 0;
+}
+
+/* ============================================================
+   HEADER ALERT BADGE
+   ============================================================ */
+.header-alert-badge {
+  background: #e74c3c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@media (max-width: 640px) {
+  .alert-grid { grid-template-columns: 1fr; }
+  .alert-label { font-size: 12px; }
+}
