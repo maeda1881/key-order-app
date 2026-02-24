@@ -372,6 +372,19 @@ export default function App() {
     localStorage.setItem('key_orders', JSON.stringify(orders))
   }, [orders])
 
+  // Auto sync every 60 seconds
+  useEffect(() => {
+    if (!gasUrl) return
+    const timer = setInterval(() => {
+      fetchFromGAS(gasUrl).then(remote => {
+        if (remote) {
+          setOrders(remote)
+          setLastSync(new Date())
+        }
+      })
+    }, 60000)
+    return () => clearInterval(timer)
+  }, [gasUrl])
   // Sync to GAS
   const syncGAS = useCallback(async (o = orders) => {
     if (!gasUrl) return
