@@ -536,3 +536,127 @@
   .sync-info { display: none; }
   .order-detail-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   INQUIRY TAG
+   ============================================================ */
+.inquiry-tag {
+  display: inline-block;
+  background: rgba(230,126,34,0.2);
+  color: #e67e22;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   INQUIRY TOGGLE
+   ============================================================ */
+.inquiry-toggle {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toggle-label {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px !important;
+  color: var(--text) !important;
+  cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-left: 24px;
+}
+
+/* ============================================================
+   EXTRA SECTION（その他管理会社）
+   ============================================================ */
+.extra-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.extra-toggle-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.extra-toggle-btn:hover { color: var(--text); }
+
+.extra-fields {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  animation: slideDown 0.2s ease;
+}
+
+/* ============================================================
+   EXTRA INFO（カード内）
+   ============================================================ */
+.extra-info {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.extra-info-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.extra-label {
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-right: 4px;
+}
+
+/* ============================================================
+   STATUS GRID 6列対応
+   ============================================================ */
+.status-grid {
+  grid-template-columns: repeat(6, 1fr) !important;
+}
+
+@media (max-width: 700px) {
+  .status-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
