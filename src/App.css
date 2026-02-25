@@ -1166,3 +1166,255 @@
   border-radius: 4px;
   margin-right: 6px;
 }
+
+/* ============================================================
+   スマホ最適化（768px以下）
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* アプリ全体 - 下部に固定ボタン分の余白 */
+  .app {
+    padding: 0 12px 100px;
+  }
+
+  /* ヘッダー - スマホは簡略化 */
+  .header {
+    padding: 12px 0 14px;
+    margin-bottom: 16px;
+  }
+  .header-title {
+    font-size: 15px;
+  }
+  .header-alert-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* ヘッダー右側 - 新規受注ボタンを非表示（下部固定ボタンを使用） */
+  .new-order-wrap {
+    display: none;
+  }
+  .sync-info-below {
+    display: none;
+  }
+  /* アイコンボタンを少し大きく */
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* ステータスグリッド - 3列 */
+  .status-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .status-card {
+    padding: 10px 6px;
+  }
+  .status-card-icon {
+    font-size: 20px;
+  }
+  .status-card-label {
+    font-size: 10px;
+  }
+
+  /* アラートグリッド - 1列 */
+  .alert-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .alert-card {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  /* 検索バー */
+  .list-toolbar {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .search-input {
+    font-size: 14px;
+  }
+
+  /* 受注カード */
+  .order-card {
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  .order-card-header {
+    padding: 14px;
+  }
+  .order-name {
+    font-size: 15px;
+  }
+  .order-sub {
+    font-size: 12px;
+  }
+  .order-amount {
+    font-size: 14px;
+  }
+  .order-card-body {
+    padding: 0 14px 14px;
+  }
+
+  /* アクションボタン - タップしやすく */
+  .transition-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .ctrl-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+  }
+
+  /* モーダル - 全画面に近く */
+  .modal {
+    max-width: 100% !important;
+    margin: 0;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    overflow-y: auto;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    animation: slideUp 0.25s ease;
+  }
+  .modal-overlay {
+    align-items: flex-end;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  .modal-header {
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 1;
+    border-radius: 20px 20px 0 0;
+  }
+  .modal-header::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 12px;
+  }
+  .order-form {
+    padding: 12px 20px 20px;
+  }
+  .order-form label {
+    font-size: 13px;
+  }
+  .order-form input,
+  .order-form textarea,
+  .order-form select {
+    font-size: 16px !important; /* iOSズーム防止 */
+    padding: 12px !important;
+  }
+  .form-buttons {
+    gap: 10px;
+  }
+  .btn-cancel, .btn-save {
+    padding: 13px !important;
+    font-size: 15px !important;
+  }
+
+  /* メーカータブ */
+  .maker-tabs {
+    gap: 6px;
+  }
+  .maker-tab {
+    padding: 10px 14px;
+    font-size: 13px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* 商品行 */
+  .item-row {
+    font-size: 11px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .item-name {
+    flex: 1 0 100%;
+    font-size: 12px;
+  }
+
+  /* 金額サマリー */
+  .price-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .price-display {
+    font-size: 20px;
+  }
+}
+
+/* ============================================================
+   下部固定「新規受注」ボタン（スマホのみ表示）
+   ============================================================ */
+.fab-new-order {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .fab-new-order {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 400px;
+    padding: 16px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 900;
+    font-family: 'Noto Sans JP', sans-serif;
+    box-shadow: 0 4px 20px rgba(78,205,196,0.4);
+    z-index: 200;
+    transition: all 0.15s;
+  }
+  .fab-new-order:active {
+    transform: translateX(-50%) scale(0.97);
+  }
+}
+
+/* ============================================================
+   PC最適化（1024px以上）
+   ============================================================ */
+@media (min-width: 1024px) {
+  .app {
+    max-width: 1100px;
+    padding: 0 32px 60px;
+  }
+  .status-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .alert-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .order-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .order-card {
+    margin-bottom: 0;
+  }
+}

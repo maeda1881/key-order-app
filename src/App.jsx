@@ -742,6 +742,11 @@ export default function App() {
       {editingOrder && <OrderForm initial={editingOrder} onSave={updateOrder} onCancel={() => setEditingOrder(null)} />}
       {showGAS && <GASSettings gasUrl={gasUrl} onSave={saveGasUrl} onClose={() => setShowGAS(false)} />}
     </div>
+
+    {/* スマホ用下部固定ボタン */}
+    <button className="fab-new-order" onClick={() => setShowForm(true)}>
+      <Plus size={20} /> 新規受注
+    </button>
     </>
   )
 }
