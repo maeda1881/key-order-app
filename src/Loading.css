@@ -68,7 +68,10 @@
   width: 130px;
   height: 130px;
   border-radius: 50%;
-  object-fit: cover;
+  /* ロゴ画像の円マーク部分（画像中央）を切り取って表示 */
+  object-fit: contain;
+  /* 黒背景を馴染ませるためmix-blendを使用 */
+  background: #0f0f13;
   animation: logoPulse 2s ease-in-out infinite;
 }
 
