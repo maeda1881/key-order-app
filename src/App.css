@@ -153,6 +153,45 @@
 }
 
 /* ============================================================
+   STATUS CARD GROUP (お問合せ + 案内済み)
+   ============================================================ */
+.status-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-card.status-card-sub {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 12px;
+  gap: 6px;
+}
+
+.status-card-icon-sm {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.status-card-label-sm {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  flex: 1;
+  text-align: left;
+}
+
+.status-card-badge-sm {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+}
+
+/* ============================================================
    LIST TOOLBAR
    ============================================================ */
 .list-toolbar {

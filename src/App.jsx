@@ -5,6 +5,7 @@ import Loading from './Loading'
 
 const STATUSES = [
   { id: 'inquiry',  label: 'お問合せ',    color: '#e67e22', bg: 'rgba(230,126,34,0.12)',  icon: '💬' },
+  { id: 'guided',   label: '案内済み',    color: '#d4a017', bg: 'rgba(212,160,23,0.12)',  icon: '📋' },
   { id: 'order',    label: '受注',        color: '#ff6b35', bg: 'rgba(255,107,53,0.12)',  icon: '📥' },
   { id: 'arranged', label: '手配済み',    color: '#9b59b6', bg: 'rgba(155,89,182,0.12)', icon: '🏭' },
   { id: 'arrived',  label: '入荷済み',    color: '#3498db', bg: 'rgba(52,152,219,0.12)', icon: '📦' },
@@ -13,7 +14,8 @@ const STATUSES = [
 ]
 
 const STATUS_TRANSITIONS = {
-  inquiry:  ['order'],
+  inquiry:  ['guided', 'order'],
+  guided:   ['order', 'inquiry'],
   order:    ['arranged', 'inquiry'],
   arranged: ['arrived', 'order'],
   arrived:  ['appt', 'arranged'],
@@ -93,6 +95,7 @@ function getAlertInfo(order) {
 const EMPTY_FORM = {
   name: '', mansion: '', room: '', phone: '', work: '',
   isInquiry: false,
+  isGuided: false,
   keyNumber: '', clientName: '', clientPhone: '', clientAddress: '',
   maker: '',
   items: [],
@@ -408,11 +411,23 @@ function OrderForm({ initial, onSave, onCancel }) {
         </div>
         <form onSubmit={submit} className="order-form">
 
-          {/* お問合せトグル */}
+          {/* お問合せ・案内済みトグル */}
           <div className="inquiry-toggle">
             <label className="toggle-label">
-              <input type="checkbox" name="isInquiry" checked={form.isInquiry || false} onChange={handle} />
+              <input type="checkbox" name="isInquiry" checked={form.isInquiry || false} onChange={e => {
+                const checked = e.target.checked
+                handle(e)
+                if (checked) setForm(f => ({ ...f, isGuided: false }))
+              }} />
               <span>💬 お問合せセクションとして登録</span>
+            </label>
+            <label className="toggle-label" style={{marginTop:6}}>
+              <input type="checkbox" name="isGuided" checked={form.isGuided || false} onChange={e => {
+                const checked = e.target.checked
+                handle(e)
+                if (checked) setForm(f => ({ ...f, isInquiry: false }))
+              }} />
+              <span>📋 案内済みとして登録</span>
             </label>
             <p className="toggle-note">チェックなしの場合は受注セクションで処理されます</p>
           </div>
@@ -633,7 +648,7 @@ export default function App() {
   }
 
   function addOrder(form) {
-    const status = form.isInquiry ? 'inquiry' : 'order'
+    const status = form.isGuided ? 'guided' : form.isInquiry ? 'inquiry' : 'order'
     const newOrder = { ...form, id: generateId(), status, createdAt: new Date().toISOString() }
     const next = [newOrder, ...orders]
     setOrders(next); setShowForm(false); syncGAS(next)
@@ -705,7 +720,21 @@ export default function App() {
       </header>
 
       <div className="status-grid">
-        {STATUSES.map(s => (
+        {/* お問合せ・案内済みをグループ化して1セルに2行表示 */}
+        <div className="status-card-group">
+          {['inquiry','guided'].map(id => {
+            const s = STATUSES.find(x => x.id === id)
+            return (
+              <button key={id} onClick={() => toggleStatus(id)} className="status-card status-card-sub" style={{ '--card-color': s.color, '--card-bg': s.bg, outline: activeStatus === id ? `2px solid ${s.color}` : 'none' }}>
+                <span className="status-card-icon-sm">{s.icon}</span>
+                <span className="status-card-label-sm">{s.label}</span>
+                <span className="status-card-badge-sm"><Badge count={counts[id]} color={s.color} /></span>
+              </button>
+            )
+          })}
+        </div>
+        {/* 残りのステータス */}
+        {STATUSES.filter(s => s.id !== 'inquiry' && s.id !== 'guided').map(s => (
           <StatusCard key={s.id} status={s} count={counts[s.id]} active={activeStatus === s.id} onClick={() => toggleStatus(s.id)} />
         ))}
       </div>
