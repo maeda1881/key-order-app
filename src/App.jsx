@@ -212,6 +212,14 @@ function OrderCard({ order, onStatusChange, onDelete, onEdit }) {
               {order.name}
             </div>
             <div className="order-sub">{order.mansion} {order.room ? order.room+'号室' : ''}</div>
+            {order.items && order.items.length > 0 && (
+              <div className="order-items-preview">
+                {order.items.slice(0,2).map(it => (
+                  <span key={it.name} className="preview-chip">{it.name}{it.qty > 1 ? ` x${it.qty}` : ''}</span>
+                ))}
+                {order.items.length > 2 && <span className="preview-chip preview-chip-more">+{order.items.length - 2}件</span>}
+              </div>
+            )}
           </div>
         </div>
         <div className="order-card-right">
@@ -225,7 +233,29 @@ function OrderCard({ order, onStatusChange, onDelete, onEdit }) {
             <div className="detail-row"><Phone size={13} /><span>{order.phone || '—'}</span></div>
             <div className="detail-row"><Building2 size={13} /><span>{order.mansion} {order.room ? order.room+'号室' : ''}</span></div>
             <div className="detail-row"><FileText size={13} /><span>{order.work || '—'}</span></div>
-            <div className="detail-row"><JapaneseYen size={13} /><span>{formatAmount(order.amount)}</span></div>
+            {order.items && order.items.length > 0 ? (
+              <div className="detail-row detail-row-items">
+                <JapaneseYen size={13} />
+                <div className="items-detail">
+                  <div className="items-detail-title">
+                    {order.maker && <span className="maker-tag">{MAKERS.find(m=>m.id===order.maker)?.label}</span>}
+                    商品明細
+                  </div>
+                  {order.items.map(item => (
+                    <div key={item.name} className="items-detail-row">
+                      <span className="items-detail-name">{item.name}</span>
+                      <span className="items-detail-qty">x{item.qty || 1}</span>
+                      <span className="items-detail-price">¥{(item.price * (item.qty || 1)).toLocaleString()}</span>
+                    </div>
+                  ))}
+                  <div className="items-detail-total">
+                    合計: <strong>¥{Number(order.amount).toLocaleString()}</strong>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="detail-row"><JapaneseYen size={13} /><span>{formatAmount(order.amount)}</span></div>
+            )}
           </div>
           {(order.keyNumber || order.clientName || order.clientPhone || order.clientAddress) && (
             <div className="extra-info">
