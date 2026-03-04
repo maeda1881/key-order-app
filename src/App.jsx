@@ -154,7 +154,8 @@ async function callGAS(gasUrl, payload) {
 async function syncToGAS(gasUrl, orders) {
   if (!gasUrl) return false
   try {
-    await fetch(gasUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sync', orders }) })
+    const token = getToken()
+    await fetch(gasUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sync', orders, token }) })
     return true
   } catch { return false }
 }
@@ -185,12 +186,13 @@ function calcAmounts(items, priceOverride, taxIncluded) {
 // ログイン画面
 // ============================================================
 function LoginScreen({ gasUrl, onLogin, onSetGasUrl }) {
-  const [preUrl, setPreUrl]   = useState(gasUrl || '')
-  const [email, setEmail]     = useState('')
-  const [pass, setPass]       = useState('')
-  const [err, setErr]         = useState('')
-  const [loading, setLoading] = useState(false)
-  const [urlSaved, setUrlSaved] = useState(false)
+  const [preUrl, setPreUrl]       = useState(gasUrl || DEFAULT_GAS_URL)
+  const [showGasInput, setShowGasInput] = useState(!gasUrl)
+  const [email, setEmail]         = useState('')
+  const [pass, setPass]           = useState('')
+  const [err, setErr]             = useState('')
+  const [loading, setLoading]     = useState(false)
+  const [urlSaved, setUrlSaved]   = useState(false)
 
   function saveUrl() {
     if (!preUrl.trim()) { setErr('URLを入力してください'); return }
@@ -228,22 +230,28 @@ function LoginScreen({ gasUrl, onLogin, onSetGasUrl }) {
         <div className="login-logo"><Key size={28} color="var(--accent)" /><span>一般受注管理</span></div>
         <div className="login-sub">CARLOCK HOMES ADMIN</div>
 
-        <div className="login-gas-section">
-          <div className="login-gas-label">▼ 初回のみ：GAS URLを設定</div>
-          <div className="login-gas-row">
-            <input
-              className="login-input"
-              type="url"
-              placeholder="https://script.google.com/macros/s/..."
-              value={preUrl}
-              onChange={e => setPreUrl(e.target.value)}
-              autoComplete="off"
-              style={{fontSize:11}}
-            />
-            <button className="login-gas-btn" onClick={saveUrl}>保存</button>
+        {showGasInput ? (
+          <div className="login-gas-section">
+            <div className="login-gas-label">GAS URLを設定</div>
+            <div className="login-gas-row">
+              <input
+                className="login-input"
+                type="url"
+                placeholder="https://script.google.com/macros/s/..."
+                value={preUrl}
+                onChange={e => setPreUrl(e.target.value)}
+                autoComplete="off"
+                style={{fontSize:11}}
+              />
+              <button className="login-gas-btn" onClick={saveUrl}>保存</button>
+            </div>
+            {urlSaved && <div className="login-gas-ok">✅ 保存しました</div>}
           </div>
-          {urlSaved && <div className="login-gas-ok">✅ 保存しました</div>}
-        </div>
+        ) : (
+          <button className="login-gas-toggle" onClick={() => { setPreUrl(gasUrl || DEFAULT_GAS_URL); setShowGasInput(true) }}>
+            ⚙️ GAS URL設定
+          </button>
+        )}
 
         <input className="login-input" type="email"    placeholder="メールアドレス" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={onKeyDown} autoComplete="username" />
         <input className="login-input" type="password" placeholder="パスワード"     value={pass}  onChange={e => setPass(e.target.value)}  onKeyDown={onKeyDown} autoComplete="current-password" />
@@ -556,11 +564,206 @@ function OrderForm({ initial, onSave, onCancel }) {
   )
 }
 
+// SalesTab コンポーネント（App.jsxに挿入する）
+// SettingsModal の直前に配置
+
+function SalesTab({ allOrders, salesFrom, salesTo, setSalesFrom, setSalesTo }) {
+  // 期間内の完了受注を抽出
+  const filtered = allOrders.filter(o => {
+    if (o.status !== 'done') return false
+    if (!o.createdAt) return false
+    const d = o.createdAt.slice(0,10)
+    return d >= salesFrom && d <= salesTo
+  })
+
+  // 売上集計
+  const salesData = filtered.map(o => {
+    const amount = Number(o.amount) || 0
+    const maker = o.maker || ''
+    // シブタニは税込み価格なので逆算、それ以外は税抜き×1.1が税込み
+    const taxIncluded = maker === 'shibutani'
+    const taxIncAmt   = amount  // amountは常に税込み請求金額
+    const taxExAmt    = taxIncluded
+      ? Math.round(amount / 1.1)   // 税込み→税抜き逆算
+      : Math.round(amount / 1.1)   // 通常も同様
+    const tax = taxIncAmt - taxExAmt
+    // 仕入れ（商品のみ、作業費・手数料類を除く）
+    const purchaseItems = (o.items || []).filter(it => {
+      const n = it.name || ''
+      return !n.includes('作業費') && !n.includes('手数料') && !n.includes('出張費') && !n.includes('事務') && !n.includes('送料')
+    })
+    const purchaseTotal = purchaseItems.reduce((s, it) => s + (it.price * (it.qty || 1)), 0)
+    return { ...o, taxIncAmt, taxExAmt, tax, purchaseItems, purchaseTotal }
+  })
+
+  const totalTaxInc  = salesData.reduce((s, o) => s + o.taxIncAmt, 0)
+  const totalTaxEx   = salesData.reduce((s, o) => s + o.taxExAmt, 0)
+  const totalTax     = salesData.reduce((s, o) => s + o.tax, 0)
+  const totalPurchase = salesData.reduce((s, o) => s + o.purchaseTotal, 0)
+
+  // 商品別集計
+  const itemMap = {}
+  salesData.forEach(o => {
+    (o.items || []).forEach(it => {
+      if (!it.name) return
+      if (!itemMap[it.name]) itemMap[it.name] = { name: it.name, price: it.price, qty: 0, total: 0 }
+      itemMap[it.name].qty   += (it.qty || 1)
+      itemMap[it.name].total += it.price * (it.qty || 1)
+    })
+  })
+  const itemList = Object.values(itemMap).sort((a,b) => b.total - a.total)
+
+  // Excel出力
+  async function exportExcel() {
+    // SheetJSを使ってExcel生成
+    const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs')
+
+    const wb = XLSX.utils.book_new()
+
+    // ── サマリーシート ──
+    const summaryData = [
+      ['カーロックホームズ 売上レポート'],
+      ['期間', `${salesFrom} ～ ${salesTo}`],
+      ['対象件数', filtered.length + '件'],
+      [],
+      ['項目', '金額'],
+      ['税込み売上', totalTaxInc],
+      ['税抜き売上', totalTaxEx],
+      ['消費税合計', totalTax],
+      ['仕入れ合計（商品のみ）', totalPurchase],
+      ['粗利（税抜き－仕入れ）', totalTaxEx - totalPurchase],
+    ]
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData)
+    wsSummary['!cols'] = [{wch:30},{wch:20}]
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'サマリー')
+
+    // ── 受注明細シート（月別） ──
+    const months = {}
+    salesData.forEach(o => {
+      const m = (o.createdAt || '').slice(0,7)
+      if (!months[m]) months[m] = []
+      months[m].push(o)
+    })
+
+    Object.entries(months).sort().forEach(([month, rows]) => {
+      const header = ['受注ID','氏名','マンション','部屋','メーカー','作業内容','税込金額','税抜金額','消費税','仕入れ合計','登録日']
+      const data = [header, ...rows.map(o => [
+        o.id, o.name, o.mansion, o.room ? o.room+'号室' : '',
+        MAKERS.find(m=>m.id===o.maker)?.label || o.maker || '',
+        o.work,
+        o.taxIncAmt, o.taxExAmt, o.tax, o.purchaseTotal,
+        (o.createdAt || '').slice(0,10)
+      ])]
+      const ws = XLSX.utils.aoa_to_sheet(data)
+      ws['!cols'] = [{wch:20},{wch:12},{wch:20},{wch:8},{wch:12},{wch:30},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12}]
+      XLSX.utils.book_append_sheet(wb, ws, month)
+    })
+
+    // ── 商品別仕入れシート ──
+    const itemHeader = ['商品名','単価','数量','合計金額']
+    const itemData = [itemHeader, ...itemList.map(it => [it.name, it.price, it.qty, it.total])]
+    const wsItems = XLSX.utils.aoa_to_sheet(itemData)
+    wsItems['!cols'] = [{wch:35},{wch:12},{wch:8},{wch:12}]
+    XLSX.utils.book_append_sheet(wb, wsItems, '商品別仕入れ')
+
+    // ダウンロード
+    XLSX.writeFile(wb, `売上レポート_${salesFrom}_${salesTo}.xlsx`)
+  }
+
+  return (
+    <div className="settings-section">
+      <div className="settings-title">売上集計（完了分）</div>
+
+      {/* 期間選択 */}
+      <div className="sales-period-row">
+        <div className="sales-period-item">
+          <span className="sales-period-label">開始日</span>
+          <input type="date" className="settings-input" value={salesFrom} onChange={e => setSalesFrom(e.target.value)} />
+        </div>
+        <span className="sales-period-sep">〜</span>
+        <div className="sales-period-item">
+          <span className="sales-period-label">終了日</span>
+          <input type="date" className="settings-input" value={salesTo} onChange={e => setSalesTo(e.target.value)} />
+        </div>
+      </div>
+
+      {/* クイック選択 */}
+      <div className="sales-quick-btns">
+        {[
+          { label: '今月', fn: () => { const d = new Date(); const f = new Date(d.getFullYear(), d.getMonth(), 1); setSalesFrom(f.toISOString().slice(0,10)); setSalesTo(d.toISOString().slice(0,10)) }},
+          { label: '先月', fn: () => { const d = new Date(); const f = new Date(d.getFullYear(), d.getMonth()-1, 1); const t = new Date(d.getFullYear(), d.getMonth(), 0); setSalesFrom(f.toISOString().slice(0,10)); setSalesTo(t.toISOString().slice(0,10)) }},
+          { label: '今年', fn: () => { const d = new Date(); setSalesFrom(`${d.getFullYear()}-01-01`); setSalesTo(d.toISOString().slice(0,10)) }},
+          { label: '全期間', fn: () => { setSalesFrom('2020-01-01'); setSalesTo(new Date().toISOString().slice(0,10)) }},
+        ].map(b => <button key={b.label} className="sales-quick-btn" onClick={b.fn}>{b.label}</button>)}
+      </div>
+
+      {/* 集計カード */}
+      {filtered.length === 0 ? (
+        <div className="deleted-empty">期間内に完了した受注がありません</div>
+      ) : (
+        <>
+          <div className="sales-summary-grid">
+            <div className="sales-card">
+              <div className="sales-card-label">対象件数</div>
+              <div className="sales-card-value">{filtered.length}<span className="sales-card-unit">件</span></div>
+            </div>
+            <div className="sales-card">
+              <div className="sales-card-label">税込み売上</div>
+              <div className="sales-card-value sales-card-accent">¥{totalTaxInc.toLocaleString()}</div>
+            </div>
+            <div className="sales-card">
+              <div className="sales-card-label">税抜き売上</div>
+              <div className="sales-card-value">¥{totalTaxEx.toLocaleString()}</div>
+            </div>
+            <div className="sales-card">
+              <div className="sales-card-label">消費税</div>
+              <div className="sales-card-value sales-card-dim">¥{totalTax.toLocaleString()}</div>
+            </div>
+            <div className="sales-card">
+              <div className="sales-card-label">仕入れ合計</div>
+              <div className="sales-card-value sales-card-warn">¥{totalPurchase.toLocaleString()}</div>
+            </div>
+            <div className="sales-card">
+              <div className="sales-card-label">粗利（税抜き－仕入れ）</div>
+              <div className="sales-card-value sales-card-profit">¥{(totalTaxEx - totalPurchase).toLocaleString()}</div>
+            </div>
+          </div>
+
+          {/* 商品別TOP */}
+          {itemList.length > 0 && (
+            <div style={{marginTop:12}}>
+              <div className="settings-title" style={{marginBottom:8}}>商品別仕入れ</div>
+              <div className="item-summary-list">
+                {itemList.slice(0,8).map(it => (
+                  <div key={it.name} className="item-summary-row">
+                    <span className="item-summary-name">{it.name}</span>
+                    <span className="item-summary-qty">×{it.qty}</span>
+                    <span className="item-summary-total">¥{it.total.toLocaleString()}</span>
+                  </div>
+                ))}
+                {itemList.length > 8 && <div className="item-summary-more">他 {itemList.length - 8} 商品</div>}
+              </div>
+            </div>
+          )}
+
+          {/* Excel出力ボタン */}
+          <button className="btn-save" style={{marginTop:16,width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8}} onClick={exportExcel}>
+            📥 Excelで出力（{salesFrom}〜{salesTo}）
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+
 // ============================================================
 // 設定モーダル（タブ付き）
 // ============================================================
-function SettingsModal({ gasUrl, onSaveGasUrl, onClose, onLogout, deletedOrders, onRestore }) {
+function SettingsModal({ gasUrl, onSaveGasUrl, onClose, onLogout, deletedOrders, onRestore, allOrders }) {
   const [tab, setTab]             = useState('gas')
+  const [salesFrom, setSalesFrom] = useState(() => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0,10) })
+  const [salesTo, setSalesTo]     = useState(() => new Date().toISOString().slice(0,10))
   const [url, setUrl]             = useState(gasUrl || DEFAULT_GAS_URL)
   const [testStatus, setTestStatus] = useState('')
   const [testLoading, setTestLoading] = useState(false)
@@ -589,6 +792,7 @@ function SettingsModal({ gasUrl, onSaveGasUrl, onClose, onLogout, deletedOrders,
     { id: 'api',     label: '🔑 APIキー' },
     { id: 'dropbox', label: '📦 Dropbox' },
     { id: 'deleted', label: `🗑️ 削除済み${deletedOrders.length > 0 ? ` (${deletedOrders.length})` : ''}` },
+    { id: 'sales',   label: '📊 売上' },
   ]
 
   return (
@@ -668,6 +872,10 @@ function SettingsModal({ gasUrl, onSaveGasUrl, onClose, onLogout, deletedOrders,
                 </div>
               )}
             </div>
+          )}
+
+          {tab === 'sales' && (
+            <SalesTab allOrders={allOrders} salesFrom={salesFrom} salesTo={salesTo} setSalesFrom={setSalesFrom} setSalesTo={setSalesTo} />
           )}
         </div>
       </div>
@@ -884,7 +1092,7 @@ export default function App() {
 
         {showForm      && <OrderForm onSave={addOrder}  onCancel={() => setShowForm(false)} />}
         {editingOrder  && <OrderForm initial={editingOrder} onSave={updateOrder} onCancel={() => setEditingOrder(null)} />}
-        {showSettings  && <SettingsModal gasUrl={gasUrl} onSaveGasUrl={saveGasUrl} onClose={() => setShowSettings(false)} onLogout={handleLogout} deletedOrders={deletedOrders} onRestore={restoreOrder} />}
+        {showSettings  && <SettingsModal gasUrl={gasUrl} onSaveGasUrl={saveGasUrl} onClose={() => setShowSettings(false)} onLogout={handleLogout} deletedOrders={deletedOrders} onRestore={restoreOrder} allOrders={orders} />}
       </div>
 
       <button className="fab-new-order" onClick={() => setShowForm(true)}>
