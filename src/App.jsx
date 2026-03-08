@@ -7,23 +7,27 @@ import Loading from './Loading'
 // 定数
 // ============================================================
 const STATUSES = [
-  { id: 'inquiry',  label: 'お問合せ',    color: '#e67e22', bg: 'rgba(230,126,34,0.12)',  icon: '💬' },
-  { id: 'guided',   label: '案内済み',    color: '#d4a017', bg: 'rgba(212,160,23,0.12)',  icon: '📋' },
-  { id: 'order',    label: '受注',        color: '#ff6b35', bg: 'rgba(255,107,53,0.12)',  icon: '📥' },
-  { id: 'arranged', label: '手配済み',    color: '#9b59b6', bg: 'rgba(155,89,182,0.12)', icon: '🏭' },
-  { id: 'arrived',  label: '入荷済み',    color: '#3498db', bg: 'rgba(52,152,219,0.12)', icon: '📦' },
-  { id: 'appt',     label: '作業アポ済み', color: '#27ae60', bg: 'rgba(39,174,96,0.12)', icon: '📅' },
-  { id: 'done',     label: '完了',        color: '#95a5a6', bg: 'rgba(149,165,166,0.12)', icon: '✅' },
+  { id: 'inquiry',   label: 'お問合せ',      color: '#e67e22', bg: 'rgba(230,126,34,0.12)',  icon: '💬' },
+  { id: 'guided',    label: '案内済み',      color: '#d4a017', bg: 'rgba(212,160,23,0.12)',  icon: '📋' },
+  { id: 'suginami',  label: '杉並本社受付',  color: '#1abc9c', bg: 'rgba(26,188,156,0.12)', icon: '🏢' },
+  { id: 'order',     label: '受注',          color: '#ff6b35', bg: 'rgba(255,107,53,0.12)',  icon: '📥' },
+  { id: 'arranged',  label: '手配済み',      color: '#9b59b6', bg: 'rgba(155,89,182,0.12)', icon: '🏭' },
+  { id: 'arrived',   label: '入荷済み',      color: '#3498db', bg: 'rgba(52,152,219,0.12)', icon: '📦' },
+  { id: 'appt',      label: '作業アポ済み',  color: '#27ae60', bg: 'rgba(39,174,96,0.12)',  icon: '📅' },
+  { id: 'done',      label: '完了',          color: '#95a5a6', bg: 'rgba(149,165,166,0.12)', icon: '✅' },
+  { id: 'cancelled', label: 'キャンセル',    color: '#e74c3c', bg: 'rgba(231,76,60,0.12)',  icon: '❌' },
 ]
 
 const STATUS_TRANSITIONS = {
-  inquiry:  ['guided', 'order'],
-  guided:   ['order', 'inquiry'],
-  order:    ['arranged', 'inquiry'],
-  arranged: ['arrived', 'order'],
-  arrived:  ['appt', 'arranged'],
-  appt:     ['done', 'arrived'],
-  done:     ['inquiry', 'order'],
+  inquiry:   ['guided', 'suginami', 'order'],
+  guided:    ['order', 'inquiry'],
+  suginami:  ['order', 'inquiry'],
+  order:     ['arranged', 'inquiry'],
+  arranged:  ['arrived', 'order'],
+  arrived:   ['appt', 'arranged'],
+  appt:      ['done', 'arrived'],
+  done:      ['inquiry', 'order'],
+  cancelled: ['inquiry'],
 }
 
 const ALERTS = [
@@ -117,7 +121,7 @@ function getAlertInfo(order) {
 
 const EMPTY_FORM = {
   name: '', mansion: '', room: '', phone: '', work: '',
-  isInquiry: false, isGuided: false,
+  isInquiry: false, isGuided: false, isSuginami: false,
   keyNumber: '', clientName: '', clientPhone: '', clientAddress: '',
   maker: '', items: [], priceOverride: '',
 }
@@ -292,7 +296,7 @@ function AlertCard({ alert, count, onClick, active }) {
   )
 }
 
-function OrderCard({ order, onStatusChange, onDelete, onEdit }) {
+function OrderCard({ order, onStatusChange, onDelete, onEdit, onCancel }) {
   const [expanded, setExpanded] = useState(false)
   const st = STATUSES.find(s => s.id === order.status) || STATUSES[1]
   const transitions = STATUS_TRANSITIONS[order.status] || []
@@ -384,8 +388,11 @@ function OrderCard({ order, onStatusChange, onDelete, onEdit }) {
               })}
             </div>
             <div className="card-controls">
-              <button className="ctrl-btn edit" onClick={() => onEdit(order)}>編集</button>
-              <button className="ctrl-btn del"  onClick={() => onDelete(order.id)}>削除</button>
+              <button className="ctrl-btn edit"   onClick={() => onEdit(order)}>編集</button>
+              {order.status !== 'cancelled' && (
+                <button className="ctrl-btn cancel" onClick={() => onCancel(order.id)}>キャンセル</button>
+              )}
+              <button className="ctrl-btn del"    onClick={() => onDelete(order.id)}>削除</button>
             </div>
           </div>
         </div>
@@ -507,12 +514,18 @@ function OrderForm({ initial, onSave, onCancel }) {
         <form onSubmit={submit} className="order-form">
           <div className="inquiry-toggle">
             <label className="toggle-label">
-              <input type="checkbox" name="isInquiry" checked={form.isInquiry || false} onChange={e => { handle(e); if (e.target.checked) setForm(f => ({ ...f, isGuided: false })) }} />
+              <input type="checkbox" name="isInquiry" checked={form.isInquiry || false} onChange={e => { handle(e); if (e.target.checked) setForm(f => ({ ...f, isGuided: false, isSuginami: false })) }} />
               <span>💬 お問合せセクションとして登録</span>
             </label>
             <label className="toggle-label" style={{marginTop:6}}>
-              <input type="checkbox" name="isGuided" checked={form.isGuided || false} onChange={e => { handle(e); if (e.target.checked) setForm(f => ({ ...f, isInquiry: false })) }} />
+              <input type="checkbox" name="isGuided" checked={form.isGuided || false} onChange={e => { handle(e); if (e.target.checked) setForm(f => ({ ...f, isInquiry: false, isSuginami: false })) }} />
               <span>📋 案内済みとして登録</span>
+            </label>
+            <label className="toggle-label" style={{marginTop:6}}>
+              <input type="checkbox" name="isSuginami" checked={form.isSuginami || false} onChange={e => {
+                handle(e); if (e.target.checked) setForm(f => ({ ...f, isInquiry: false, isGuided: false }))
+              }} />
+              <span>🏢 杉並本社（受付）として登録</span>
             </label>
             <p className="toggle-note">チェックなしの場合は受注セクションで処理されます</p>
           </div>
@@ -981,7 +994,7 @@ export default function App() {
   }
 
   function addOrder(form) {
-    const status = form.isGuided ? 'guided' : form.isInquiry ? 'inquiry' : 'order'
+    const status = form.isSuginami ? 'suginami' : form.isGuided ? 'guided' : form.isInquiry ? 'inquiry' : 'order'
     const newOrder = { ...form, id: generateId(), status, createdAt: new Date().toISOString() }
     const next = [newOrder, ...orders]
     setOrders(next); setShowForm(false); syncGAS(next)
@@ -1003,6 +1016,12 @@ export default function App() {
     setOrders(next)
     setDeletedOrders(nextDeleted)
     syncGAS(next)
+  }
+
+  function cancelOrder(id) {
+    if (!confirm('この受注をキャンセルにしますか？')) return
+    const next = orders.map(o => o.id === id ? { ...o, status: 'cancelled' } : o)
+    setOrders(next); syncGAS(next)
   }
 
   // 復元
@@ -1071,7 +1090,7 @@ export default function App() {
 
         <div className="status-grid">
           <div className="status-card-group">
-            {['inquiry','guided'].map(id => {
+            {['inquiry','guided','suginami'].map(id => {
               const s = STATUSES.find(x => x.id === id)
               return (
                 <button key={id} onClick={() => toggleStatus(id)} className="status-card status-card-sub" style={{ '--card-color': s.color, '--card-bg': s.bg, outline: activeStatus === id ? `2px solid ${s.color}` : 'none' }}>
@@ -1082,7 +1101,7 @@ export default function App() {
               )
             })}
           </div>
-          {STATUSES.filter(s => s.id !== 'inquiry' && s.id !== 'guided').map(s => (
+          {STATUSES.filter(s => !['inquiry','guided','suginami'].includes(s.id)).map(s => (
             <StatusCard key={s.id} status={s} count={counts[s.id]} active={activeStatus === s.id} onClick={() => toggleStatus(s.id)} />
           ))}
         </div>
@@ -1114,7 +1133,7 @@ export default function App() {
               {!activeStatus && !activeAlert && <button className="btn-primary" style={{marginTop:16}} onClick={() => setShowForm(true)}><Plus size={14}/> 最初の受注を登録</button>}
             </div>
           )}
-          {filtered.map(o => <OrderCard key={o.id} order={o} onStatusChange={changeStatus} onDelete={deleteOrder} onEdit={o => setEditingOrder(o)} />)}
+          {filtered.map(o => <OrderCard key={o.id} order={o} onStatusChange={changeStatus} onDelete={deleteOrder} onEdit={o => setEditingOrder(o)} onCancel={cancelOrder} />)}
         </div>
 
         {showForm      && <OrderForm onSave={addOrder}  onCancel={() => setShowForm(false)} />}
