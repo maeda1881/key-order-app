@@ -1889,3 +1889,53 @@
   background: rgba(231,76,60,0.2);
   border-color: #e74c3c;
 }
+
+/* 完了ボタン（card-controls内） */
+.ctrl-btn.done {
+  background: rgba(39,174,96,0.1);
+  color: #27ae60;
+  border: 1px solid rgba(39,174,96,0.3);
+}
+.ctrl-btn.done:hover {
+  background: rgba(39,174,96,0.2);
+  border-color: #27ae60;
+}
+
+/* ============================================================
+   完了・キャンセル 縦2分割カード
+   ============================================================ */
+.status-card-split {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  min-width: 100px;
+  flex: 0 0 auto;
+  gap: 1px;
+  background: rgba(255,255,255,0.05);
+}
+.status-card-split-half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  color: var(--card-color);
+  outline-offset: -2px;
+}
+.status-card-split-half.top {
+  background: rgba(149,165,166,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.status-card-split-half.top:hover { background: rgba(149,165,166,0.18); }
+.status-card-split-half.bottom {
+  background: rgba(231,76,60,0.08);
+}
+.status-card-split-half.bottom:hover { background: rgba(231,76,60,0.18); }
+.split-icon { font-size: 16px; }
+.split-label { font-size: 12px; font-weight: 700; white-space: nowrap; }

@@ -388,11 +388,14 @@ function OrderCard({ order, onStatusChange, onDelete, onEdit, onCancel }) {
               })}
             </div>
             <div className="card-controls">
-              <button className="ctrl-btn edit"   onClick={() => onEdit(order)}>編集</button>
-              {order.status !== 'cancelled' && (
-                <button className="ctrl-btn cancel" onClick={() => onCancel(order.id)}>キャンセル</button>
+              <button className="ctrl-btn edit" onClick={() => onEdit(order)}>編集</button>
+              {order.status !== 'done' && order.status !== 'cancelled' && (
+                <button className="ctrl-btn done" onClick={() => onStatusChange(order.id, 'done')}>✅ 完了</button>
               )}
-              <button className="ctrl-btn del"    onClick={() => onDelete(order.id)}>削除</button>
+              {order.status !== 'cancelled' && (
+                <button className="ctrl-btn cancel" onClick={() => onCancel(order.id)}>❌ キャンセル</button>
+              )}
+              <button className="ctrl-btn del" onClick={() => onDelete(order.id)}>削除</button>
             </div>
           </div>
         </div>
@@ -1101,9 +1104,36 @@ export default function App() {
               )
             })}
           </div>
-          {STATUSES.filter(s => !['inquiry','guided','suginami'].includes(s.id)).map(s => (
+          {STATUSES.filter(s => !['inquiry','guided','suginami','done','cancelled'].includes(s.id)).map(s => (
             <StatusCard key={s.id} status={s} count={counts[s.id]} active={activeStatus === s.id} onClick={() => toggleStatus(s.id)} />
           ))}
+          {/* 完了・キャンセル 縦2分割カード */}
+          {(() => {
+            const done = STATUSES.find(s => s.id === 'done')
+            const cancelled = STATUSES.find(s => s.id === 'cancelled')
+            return (
+              <div className="status-card-split">
+                <button
+                  className="status-card-split-half top"
+                  style={{ '--card-color': done.color, outline: activeStatus === 'done' ? `2px solid ${done.color}` : 'none' }}
+                  onClick={() => toggleStatus('done')}
+                >
+                  <span className="split-icon">{done.icon}</span>
+                  <span className="split-label">{done.label}</span>
+                  <Badge count={counts['done']} color={done.color} />
+                </button>
+                <button
+                  className="status-card-split-half bottom"
+                  style={{ '--card-color': cancelled.color, outline: activeStatus === 'cancelled' ? `2px solid ${cancelled.color}` : 'none' }}
+                  onClick={() => toggleStatus('cancelled')}
+                >
+                  <span className="split-icon">{cancelled.icon}</span>
+                  <span className="split-label">{cancelled.label}</span>
+                  <Badge count={counts['cancelled']} color={cancelled.color} />
+                </button>
+              </div>
+            )
+          })()}
         </div>
 
         <div className="alert-grid">
